@@ -2,6 +2,8 @@
 
 react + antd + typescript 集成轻量级管理后台
 
+[预览](https://react.bigfool.cn)
+
 based on [hsl947](https://github.com/hsl947/react-antd-multi-tabs-admin)
 
 ## 功能
