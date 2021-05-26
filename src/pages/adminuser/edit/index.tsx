@@ -33,7 +33,7 @@ const FormView: FC = () => {
   // 获取权限列表数据
   const getPermissions = async () => {
     await AdminPermissionApi.getAdminPermissions().then((res: any) => {
-      const data: Array<any> = res?.data ? res.data : []
+      const data: Array<any> = res.data ? res.data : []
       originalTreeData = makeTree(data)
       const treeDataTemp = makeTreeData(originalTreeData, 'id', 'name')
       setTreeData(treeDataTemp)
@@ -41,15 +41,12 @@ const FormView: FC = () => {
   }
 
   useEffect(() => {
-    resetFields()
-
     getPermissions()
-
     if (id) {
       AdminUserApi.getAdminUser(id).then((res) => {
-        const data: any = res?.data ? res.data : {}
-        const adminUsers = data?.adminUser ? data.adminUser : {}
-        const permissions = data?.permissions ? data.permissions : []
+        const data: any = res.data ? res.data : {}
+        const adminUsers = data.adminUser ? data.adminUser : {}
+        const permissions = data.permissions ? data.permissions : []
         const permissionIds = permissions.map((item) => {
           return item.permissionId
         })
@@ -72,11 +69,14 @@ const FormView: FC = () => {
         setCheckedKeys(checkIds)
 
         adminUsers.status = adminUsers.status.toString()
+        resetFields()
         setFieldsValue({ ...adminUsers })
       })
+    } else {
+      setFieldsValue({ status: '1' })
     }
     // eslint-disable-next-line
-  },[])
+  }, [id])
 
   const onCheck = (checkedKeysValue: any) => {
     setCheckedKeys(checkedKeysValue)
@@ -90,17 +90,24 @@ const FormView: FC = () => {
       submitForm.status = parseInt(submitForm.status, 0)
     }
     if (id) {
-      AdminUserApi.updateAdminUser(id, submitForm).then((res) => {
-        setLoading(false)
-        message.success(res.message)
-      })
+      AdminUserApi.updateAdminUser(id, submitForm)
+        .then((res) => {
+          message.success(res.message)
+        })
+        .finally(() => {
+          setLoading(false)
+        })
     } else {
-      AdminUserApi.addAdminUser(submitForm).then((res) => {
-        setLoading(false)
-        message.success(res.message)
-        const returnUrl = '/adminuser/list'
-        closeTabAction(history, returnUrl)
-      })
+      AdminUserApi.addAdminUser(submitForm)
+        .then((res) => {
+          setLoading(false)
+          message.success(res.message)
+          const returnUrl = '/adminuser/list'
+          closeTabAction(history, returnUrl)
+        })
+        .catch(() => {
+          setLoading(false)
+        })
     }
   }
 

@@ -60,6 +60,7 @@ const LoginForm: FC<Props> = ({
           size="large"
         />
       </Form.Item>
+      <Form.Item>用户名：test 密码：123456</Form.Item>
       <Form.Item>
         <Button
           className="login-form-button"

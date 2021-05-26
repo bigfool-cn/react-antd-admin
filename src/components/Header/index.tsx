@@ -53,7 +53,7 @@ const Header: FC<Props> = ({
     if (theme === 'default') {
       const script = document.createElement('script')
       script.id = 'themeJs'
-      script.src = '/less.min.js'
+      script.src = '/static/less.min.js'
       document.body.appendChild(script)
 
       setTimeout(() => {

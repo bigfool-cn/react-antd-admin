@@ -1,6 +1,6 @@
 import React, { useRef, FC, useState } from 'react'
 import { useHistory } from 'react-router-dom'
-import { Button, Form, Input, Modal, Tag, message } from 'antd'
+import { Button, Form, Input, Modal, Tag, Spin, message } from 'antd'
 import MyTable from '@/components/MyTable'
 import { isAuthorized } from '@/assets/js/publicFunc'
 import MySelect from '@/components/MySelect'
@@ -26,6 +26,8 @@ const AdminUserList: FC = () => {
   const [form] = Form.useForm()
   const { getFieldsValue, resetFields } = form
 
+  const [loading, setLoading] = useState<boolean>(false)
+  const [btnLoading, setBtnLoading] = useState<boolean>(false)
   const [visible, setVisible] = useState<boolean>(false)
   const [id, setId] = useState<number>(0)
   const [delIds, setDelIds] = useState<Array<string | number>>([])
@@ -67,17 +69,27 @@ const AdminUserList: FC = () => {
   }
 
   const delAdminUser = () => {
-    AdminUserApi.deleteAdminUser(delIds).then((res: any) => {
-      message.success(res.message)
-      tableRef.current.update()
-    })
+    setBtnLoading(true)
+    AdminUserApi.deleteAdminUser(delIds)
+      .then((res: any) => {
+        message.success(res.message)
+        tableRef.current.update()
+      })
+      .finally(() => {
+        setBtnLoading(false)
+      })
   }
 
   const handleSubmit = () => {
+    setLoading(true)
     const submitForm = { ...getFieldsValue() }
-    AdminUserApi.updateAdminUserPwd(id, submitForm).then((res: any) => {
-      message.success(res.message)
-    })
+    AdminUserApi.updateAdminUserPwd(id, submitForm)
+      .then((res: any) => {
+        message.success(res.message)
+      })
+      .finally(() => {
+        setLoading(false)
+      })
   }
 
   // 搜索栏配置项
@@ -157,6 +169,7 @@ const AdminUserList: FC = () => {
       onClick={delAdminUser}
       type="primary"
       disabled={delDisabeld}
+      loading={btnLoading}
       danger
     >
       删除用户
@@ -178,46 +191,48 @@ const AdminUserList: FC = () => {
           onCancel={cancelModel}
           footer={null}
         >
-          <Form {...modalLayoutSm5} form={form} onFinish={handleSubmit}>
-            <Form.Item
-              label="新密码"
-              name="password"
-              rules={[
-                {
-                  required: true,
-                  message: '请输入新密码'
-                },
-                {
-                  min: 6,
-                  message: '新密码长度最少6个字符'
-                }
-              ]}
-            >
-              <Input placeholder="请输入新密码" />
-            </Form.Item>
-            <Form.Item
-              label="确认新密码"
-              name="repassword"
-              rules={[
-                {
-                  required: true,
-                  validator: repasswordValidator
-                }
-              ]}
-            >
-              <Input placeholder="请输入确认新密码" />
-            </Form.Item>
-            <Form.Item
-              wrapperCol={{
-                xs: { span: 20, offset: 5 },
-                sm: { span: 20, offset: 5 }
-              }}
-            >
-              <Button type="primary" htmlType="submit">
-                提交
-              </Button>
-            </Form.Item>
-          </Form>
+          <Spin spinning={loading}>
+            <Form {...modalLayoutSm5} form={form} onFinish={handleSubmit}>
+              <Form.Item
+                label="新密码"
+                name="password"
+                rules={[
+                  {
+                    required: true,
+                    message: '请输入新密码'
+                  },
+                  {
+                    min: 6,
+                    message: '新密码长度最少6个字符'
+                  }
+                ]}
+              >
+                <Input placeholder="请输入新密码" />
+              </Form.Item>
+              <Form.Item
+                label="确认新密码"
+                name="repassword"
+                rules={[
+                  {
+                    required: true,
+                    validator: repasswordValidator
+                  }
+                ]}
+              >
+                <Input placeholder="请输入确认新密码" />
+              </Form.Item>
+              <Form.Item
+                wrapperCol={{
+                  xs: { span: 20, offset: 5 },
+                  sm: { span: 20, offset: 5 }
+                }}
+              >
+                <Button type="primary" htmlType="submit">
+                  提交
+                </Button>
+              </Form.Item>
+            </Form>
+          </Spin>
         </Modal>
       )}
       {isAuthorized('adminuser:list:add') && addAdminUserEl}

@@ -12,7 +12,8 @@ import {
   Switch,
   Input,
   TreeSelect,
-  message
+  message,
+  Spin
 } from 'antd'
 import { modalLayoutSm } from '@/config/layout'
 import AdminPermissionApi from '@/api/admin-permission.ts'
@@ -29,6 +30,8 @@ interface AdminPermission {
 }
 
 const AdminPermissionList: FC = () => {
+  const [loading, setLoading] = useState<boolean>(false)
+  const [btnLoading, setBtnLoading] = useState<boolean>(false)
   const [visible, setVisible] = useState<boolean>(false)
   const [title, setTitle] = useState<string>('新增权限')
   const [permissionId, setPermissionId] = useState<number>(0)
@@ -40,7 +43,7 @@ const AdminPermissionList: FC = () => {
 
   const getAdminPermissions = (search: object = {}) => {
     AdminPermissionApi.getAdminPermissions(search).then((res: any) => {
-      const permissions = res?.data ? res.data : []
+      const permissions = res.data ? res.data : []
       const adminPermissionsTree = makeTree(permissions)
       setPermissionList(adminPermissionsTree)
     })
@@ -85,29 +88,40 @@ const AdminPermissionList: FC = () => {
   }
 
   const delAdminPermission = (record: AdminPermission) => {
+    setBtnLoading(true)
     const ids = [record.id]
-    AdminPermissionApi.deleteAdminPermission(ids).then((res) => {
-      message.success(res.message)
-      getAdminPermissions()
-    })
+    AdminPermissionApi.deleteAdminPermission(ids)
+      .then((res) => {
+        message.success(res.message)
+        getAdminPermissions()
+      })
+      .finally(() => {
+        setBtnLoading(false)
+      })
   }
 
   const handleSubmit = () => {
+    setLoading(true)
     if (permissionId) {
-      AdminPermissionApi.updateAdminPermission(
-        permissionId,
-        getFieldsValue()
-      ).then((res) => {
-        message.success(res.message)
-        setVisible(false)
-        getAdminPermissions()
-      })
+      AdminPermissionApi.updateAdminPermission(permissionId, getFieldsValue())
+        .then((res) => {
+          message.success(res.message)
+          setVisible(false)
+          getAdminPermissions()
+        })
+        .finally(() => {
+          setLoading(false)
+        })
     } else {
-      AdminPermissionApi.addAdminPermission(getFieldsValue()).then((res) => {
-        message.success(res.message)
-        setVisible(false)
-        getAdminPermissions()
-      })
+      AdminPermissionApi.addAdminPermission(getFieldsValue())
+        .then((res) => {
+          message.success(res.message)
+          setVisible(false)
+          getAdminPermissions()
+        })
+        .finally(() => {
+          setLoading(false)
+        })
     }
   }
   const AddBtn = () => (
@@ -136,6 +150,7 @@ const AdminPermissionList: FC = () => {
               onClick={() => delAdminPermission(record)}
               size="small"
               type="primary"
+              loading={btnLoading}
               danger
             >
               删除
@@ -194,43 +209,45 @@ const AdminPermissionList: FC = () => {
           onCancel={cancelModel}
           footer={null}
         >
-          <Form {...modalLayoutSm} form={form} onFinish={handleSubmit}>
-            <Form.Item label="所属" name="parentId">
-              <TreeSelect
-                style={{ width: '100%' }}
-                dropdownStyle={{ maxHeight: 400, overflow: 'auto' }}
-                treeData={treeSelectList}
-                placeholder="请选择"
-              />
-            </Form.Item>
-            <Form.Item label="辅助信息" name="isHelp" valuePropName="checked">
-              <Switch />
-            </Form.Item>
-            <Form.Item
-              label="名称"
-              name="name"
-              rules={[{ validator: nameValidator }]}
-            >
-              <Input placeholder="请输入名称" />
-            </Form.Item>
-            <Form.Item
-              label="权限标识"
-              name="code"
-              rules={[{ validator: codeValidator }]}
-            >
-              <Input placeholder="格式(字母数字:组合)：abc:cde" />
-            </Form.Item>
-            <Form.Item
-              wrapperCol={{
-                xs: { span: 20, offset: 4 },
-                sm: { span: 20, offset: 4 }
-              }}
-            >
-              <Button type="primary" htmlType="submit">
-                提交
-              </Button>
-            </Form.Item>
-          </Form>
+          <Spin spinning={loading}>
+            <Form {...modalLayoutSm} form={form} onFinish={handleSubmit}>
+              <Form.Item label="所属" name="parentId">
+                <TreeSelect
+                  style={{ width: '100%' }}
+                  dropdownStyle={{ maxHeight: 400, overflow: 'auto' }}
+                  treeData={treeSelectList}
+                  placeholder="请选择"
+                />
+              </Form.Item>
+              <Form.Item label="辅助信息" name="isHelp" valuePropName="checked">
+                <Switch />
+              </Form.Item>
+              <Form.Item
+                label="名称"
+                name="name"
+                rules={[{ validator: nameValidator }]}
+              >
+                <Input placeholder="请输入名称" />
+              </Form.Item>
+              <Form.Item
+                label="权限标识"
+                name="code"
+                rules={[{ validator: codeValidator }]}
+              >
+                <Input placeholder="格式(字母数字:组合)：abc:cde" />
+              </Form.Item>
+              <Form.Item
+                wrapperCol={{
+                  xs: { span: 20, offset: 4 },
+                  sm: { span: 20, offset: 4 }
+                }}
+              >
+                <Button type="primary" htmlType="submit">
+                  提交
+                </Button>
+              </Form.Item>
+            </Form>
+          </Spin>
         </Modal>
       )}
       <SearchForm
